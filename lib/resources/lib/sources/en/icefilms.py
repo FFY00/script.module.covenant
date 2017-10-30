@@ -32,7 +32,7 @@ class source:
         self.domains = ['icefilms.is']
         self.base_link = 'https://icefilms.is'
         self.search_link_movie = '/newmov.php?menu=search&query=%s'
-        self.search_link_show = 'newmov.php?menu=searchshow&query=%s'
+        self.search_link_show = 'show/%s'
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
@@ -40,8 +40,9 @@ class source:
             search_url = urlparse.urljoin(self.base_link, self.search_link_movie % clean_title.replace('-','+'))
             r = cache.get(client.request, 1, search_url)
             r = dom_parser2.parse_dom(r, 'div', {'class': 'movie'})
-            r = [(dom_parser2.parse_dom(i.content, 'a', req='href'),
-                  dom_parser2.parse_dom(i.content, 'div', {'class': 'year'})) for i in r]
+            r = [(dom_parser2.parse_dom(i.content, 'a', req='href'), \
+                  dom_parser2.parse_dom(i.content, 'div', {'class': 'year'})) \
+                  for i in r]
             r = [(urlparse.urljoin(self.base_link, i[0][0].attrs['href']), i[1][0].content) for i in r if i[1][0].content == year]
             url = r[0][0]
             return url
@@ -51,29 +52,20 @@ class source:
     def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
         try:
             clean_title = cleantitle.geturl(tvshowtitle)
-            search_url = urlparse.urljoin(self.base_link, self.search_link_show % clean_title.replace('-', '+'))
-            r = cache.get(client.request, 1, search_url)
-            r = dom_parser2.parse_dom(r, 'div', {'class': 'movies'})
-            r = [(dom_parser2.parse_dom(i.content, 'a', req='href'),
-                  dom_parser2.parse_dom(i.content, 'div', {'class': 'year'})) for i in r]
-            r = [(urlparse.urljoin(self.base_link, i[0][0].attrs['href']), i[1][0].content) for i in r if
-                 i[1][0].content == year]
-            url = r[0][0]
+            url = urlparse.urljoin(self.base_link, self.search_link_show % clean_title + '/')
             return url
-        except:
-            pass
-
+        except Exception:
+            return
+            
     def episode(self, url, imdb, tvdb, title, premiered, season, episode):
         try:
-            if not url:
-                return
-            url = url[:-1] if url.endswith('/') else url
-            url += '/season/%d/episode/%d' % (int(season), int(episode))
-
+            print url
+            url = urlparse.urljoin(url, 'season/%s/episode/%s' % (season, episode))
+            print url
             return url
-        except:
+        except Exception:
             return
-
+            
     def sources(self, url, hostDict, hostprDict):
         try:
             sources = []          
@@ -82,21 +74,22 @@ class source:
                 v = re.findall('\$\.get\(\'(.+?)(?:\'\,\s*\{\"embed\":\")([\d]+)', r)
                 for i in v:
                     url = urlparse.urljoin(self.base_link, i[0] + '?embed=%s' % i[1])
-                    ri = cache.get(client.request, 1, url)
+                    ri = cache.get(client.request, 1, search_url)
                     url = dom_parser2.parse_dom(ri, 'iframe', req='src')[0]
                     url = url.attrs['src']
                     try:
                         host = re.findall('([\w]+[.][\w]+)$', urlparse.urlparse(url.strip().lower()).netloc)[0]
-                        host = client.replaceHTMLCodes(host)
-                        host = host.encode('utf-8')
-                        sources.append({
-                            'source': host,
-                            'quality': 'SD',
-                            'language': 'en',
-                            'url': url.replace('\/','/'),
-                            'direct': False,
-                            'debridonly': False
-                        })
+                        if host in hostDict:
+                            host = client.replaceHTMLCodes(host)
+                            host = host.encode('utf-8')
+                            sources.append({
+                                'source': host,
+                                'quality': 'SD',
+                                'language': 'en',
+                                'url': url.replace('\/','/'),
+                                'direct': False,
+                                'debridonly': False
+                            })
                     except: pass
             except: pass
             r = dom_parser2.parse_dom(r, 'div', {'class': ['btn','btn-primary']})
