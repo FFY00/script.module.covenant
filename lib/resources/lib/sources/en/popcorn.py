@@ -117,7 +117,7 @@ class source:
                         url = client.replaceHTMLCodes(url)
                         url = url.encode('utf-8')
 
-                        sources.append({'source': 'direct', 'quality': quality, 'language': 'en', 'url': url,
+                        sources.append({'source': 'popcorn', 'quality': quality, 'language': 'en', 'url': url,
                                         'info': info, 'direct': True, 'debridonly': False})
                 except:
                     pass
