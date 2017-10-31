@@ -24,7 +24,7 @@ from resources.lib.modules import control
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
 from resources.lib.modules import debrid
-
+from resources.lib.modules import cfscrape
 
 class source:
     def __init__(self):
@@ -87,20 +87,23 @@ class source:
             url = self.search_link % urllib.quote_plus(query)
             url = urlparse.urljoin(self.base_link, url)
 
-            r = client.request(url)
-
+            scraper = cfscrape.create_scraper()
+            r = scraper.get(url).content
             posts = client.parseDOM(r, 'item')
 
             hostDict = hostprDict + hostDict
-
+            print posts
             items = []
-
+            
             for post in posts:
                 try:
-                    items += zip(client.parseDOM(post, 'a', attrs={'target': '_blank'}), client.parseDOM(post, 'a', ret='href', attrs={'target': '_blank'}))
+                    print post
+                    items += zip(client.parseDOM(post, 'title'), client.parseDOM(post, 'link'))
                 except:
                     pass
-
+           
+            items = [(i[0], i[1]) for i in items if data['year'] in i[0]]        
+            print items[:1]
             for item in items:
                 try:
                     name = item[0]

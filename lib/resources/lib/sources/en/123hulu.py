@@ -30,7 +30,7 @@ class source:
         Constructor defines instances variables
 
         '''
-        self.priority = 0
+        self.priority = 1
         self.language = ['en']
         self.domains = ['123hulu.com']
         self.base_link = 'http://123hulu.com'

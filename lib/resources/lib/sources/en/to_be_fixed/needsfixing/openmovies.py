@@ -31,7 +31,7 @@ class source:
         self.priority = 1
         self.language = ['en']
         self.domains = ['openloadmovies.net', 'openloadmovies.tv', 'openloadmovies.org', 'openloadmovies.co']
-        self.base_link = 'http://openloadmovies.net'
+        self.base_link = 'http://openloadmovies.tv'
         self.post_link = '/wp-admin/admin-ajax.php'
         self.search_link = '/?s=%s'
 

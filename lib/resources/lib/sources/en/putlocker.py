@@ -28,9 +28,9 @@ from resources.lib.modules import directstream
 
 class source:
     def __init__(self):
-        self.priority = 1
+        self.priority = 0
         self.language = ['en']
-        self.domains = ['putlocker.systems', 'putlocker-movies.tv', 'putlocker.yt', 'cartoonhd.website', 'cartoonhd.online', 'cartoonhd.cc']
+        self.domains = ['putlocker.systems', 'putlocker-movies.tv', 'cartoonhd.website', 'cartoonhd.online', 'cartoonhd.cc']
         self.base_link = 'https://cartoonhd.be/'
 
     def movie(self, imdb, title, localtitle, aliases, year):

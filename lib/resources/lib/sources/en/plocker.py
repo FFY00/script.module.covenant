@@ -30,7 +30,7 @@ class source:
         Constructor defines instances variables
 
         '''
-        self.priority = 1
+        self.priority = 0
         self.language = ['en']
         self.domains = ['putlocker.rs']
         self.base_link = 'https://putlocker.sk'

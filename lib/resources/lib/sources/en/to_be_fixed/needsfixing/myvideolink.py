@@ -29,36 +29,14 @@ class source:
     def __init__(self):
         self.priority = 1
         self.language = ['en']
-        self.domains = ['myddl.pw','xtremeli.pw']
-        self.base_link = 'http://xtremeli.pw'
-        self.search_link = '/search/%s/feed/rss2/'
+        self.domains = ['dl.newmyvideolink.xyz','newmyvideolink.xyz', 'beta.myvideolinks.xyz', 'videolinks.ga', 'myvideolinks.ga', 'ezfile.xyz', 'newmyvideolinks.ga']
+        self.base_link = 'http://dl.newmyvideolink.xyz'
+        self.search_link = '/?s=%s'
 
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
             url = {'imdb': imdb, 'title': title, 'year': year}
-            url = urllib.urlencode(url)
-            return url
-        except:
-            return
-
-
-    def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
-        try:
-            url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
-            url = urllib.urlencode(url)
-            return url
-        except:
-            return
-
-
-    def episode(self, url, imdb, tvdb, title, premiered, season, episode):
-        try:
-            if url == None: return
-
-            url = urlparse.parse_qs(url)
-            url = dict([(i, url[i][0]) if url[i] else (i, '') for i in url])
-            url['title'], url['premiered'], url['season'], url['episode'] = title, premiered, season, episode
             url = urllib.urlencode(url)
             return url
         except:
@@ -83,12 +61,26 @@ class source:
             query = '%s S%02dE%02d' % (data['tvshowtitle'], int(data['season']), int(data['episode'])) if 'tvshowtitle' in data else '%s %s' % (data['title'], data['year'])
             query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
 
-            url = self.search_link % urllib.quote_plus(query)
-            url = urlparse.urljoin(self.base_link, url)
+            s = client.request(self.base_link)
+            s = re.findall('\'(http.+?)\'', s) + re.findall('\"(http.+?)\"', s)
+            s = [i for i in s if urlparse.urlparse(self.base_link).netloc in i and len(i.strip('/').split('/')) > 3]
+            s = s[0] if s else urlparse.urljoin(self.base_link, 'posts')
+            s = s.strip('/')
+
+            url = s + self.search_link % urllib.quote_plus(query)
 
             r = client.request(url)
 
-            posts = client.parseDOM(r, 'item')
+            r = client.parseDOM(r, 'h2', attrs = {'class': 'post-title'})
+            r = zip(client.parseDOM(r, 'a', ret='href'), client.parseDOM(r, 'a', ret='title'))
+            r = [(i[0], i[1], re.sub('(\.|\(|\[|\s)(\d{4}|3D)(\.|\)|\]|\s|)(.+|)', '', i[1]), re.findall('[\.|\(|\[|\s](\d{4}|)([\.|\)|\]|\s|].+)', i[1])) for i in r]
+            r = [(i[0], i[1], i[2], i[3][0][0], i[3][0][1]) for i in r if i[3]]
+            r = [(i[0], i[1], i[2], i[3], re.split('\.|\(|\)|\[|\]|\s|\-', i[4])) for i in r]
+            r = [i for i in r if cleantitle.get(title) == cleantitle.get(i[2]) and data['year'] == i[3]]
+            r = [i for i in r if not any(x in i[4] for x in ['HDCAM', 'CAM', 'DVDR', 'DVDRip', 'DVDSCR', 'HDTS', 'TS', '3D'])]
+            r = [i for i in r if '1080p' in i[4]][:1] + [i for i in r if '720p' in i[4]][:1]
+
+            posts = [(i[1], i[0]) for i in r]
 
             hostDict = hostprDict + hostDict
 
@@ -96,21 +88,14 @@ class source:
 
             for post in posts:
                 try:
-                    t = client.parseDOM(post, 'title')[0]
+                    t = post[0]
 
-                    c = client.parseDOM(post, 'content.+?')[0]
+                    u = client.request(post[1])
+                    u = re.findall('\'(http.+?)\'', u) + re.findall('\"(http.+?)\"', u)
+                    u = [i for i in u if not '/embed/' in i]
+                    u = [i for i in u if not 'youtube' in i]
 
-                    u = client.parseDOM(c, 'p')
-                    u = [client.parseDOM(i, 'a', ret='href') for i in u]
-                    u = [i[0] for i in u if len(i) == 1]
-                    if not u: raise Exception()
-
-                    if 'tvshowtitle' in data:
-                         u = [(re.sub('(720p|1080p)', '', t) + ' ' + [x for x in i.strip('//').split('/')][-1], i) for i in u]
-                    else:
-                         u = [(t, i) for i in u]
-
-                    items += u
+                    items += [(t, i) for i in u]
                 except:
                     pass
 
@@ -120,6 +105,7 @@ class source:
                     name = client.replaceHTMLCodes(name)
 
                     t = re.sub('(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*|3D)(\.|\)|\]|\s|)(.+|)', '', name)
+
                     if not cleantitle.get(t) == cleantitle.get(title): raise Exception()
 
                     y = re.findall('[\.|\(|\[|\s](\d{4}|S\d*E\d*|S\d*)[\.|\)|\]|\s]', name)[-1].upper()
