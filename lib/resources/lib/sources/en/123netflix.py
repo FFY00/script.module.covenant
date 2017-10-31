@@ -112,9 +112,7 @@ class source:
             except:
                 pass
             r = client.parseDOM(r, 'div', {'class': 'server_line'})
-            #print r
             r = [(client.parseDOM(i, 'a', ret='href')[0], client.parseDOM(i, 'p', attrs={'class': 'server_servername'})[0]) for i in r]
-            print r
             if r:
                 for i in r:
                     try:
