@@ -368,18 +368,17 @@ class sources:
         
         quality = control.setting('hosts.quality')
         if quality == '': quality = '0'
-
-        source_4k = 0
-        source_1080 = 0
-        source_720 = 0
-        source_sd = 0
         
-        rd_source_4k = 0
-        rd_source_1080 = 0
-        rd_source_720 = 0
-        rd_source_sd = 0
+        line1 = line2 = line3 = ""
+        
+        source_4k = d_source_4k = 0
+        source_1080 = d_source_1080 = 0
+        source_720 = d_source_720 = 0
+        source_sd = d_source_sd = 0
+        total = d_total = 0
         
         debrid_list = debrid.debrid_resolvers
+        debrid_status = debrid.status()
         
         for i in range(0, 4 * timeout):
             try:
@@ -409,67 +408,90 @@ class sources:
                         source_sd = len([e for e in self.sources if e['quality'] == 'SD' and e['debridonly'] == False])
                     else:
                         source_sd = len([e for e in self.sources if e['quality'] == 'SD' and e['debridonly'] == False])
+                    
+                    total = source_4k + source_1080 + source_720 + source_sd
 
-                    if debrid.status():
+                    if debrid_status:
                         if quality in ['0']:
                             for d in debrid_list:
-                                rd_source_4k = len([e for e in self.sources if e['quality'] == '4K' and d.valid_url('', e['source'])])
-                                rd_source_1080 = len([e for e in self.sources if e['quality'] in ['1440p','1080p'] and d.valid_url('', e['source'])])
-                                rd_source_720 = len([e for e in self.sources if e['quality'] in ['720p','HD'] and d.valid_url('', e['source'])])
-                                rd_source_sd = len([e for e in self.sources if e['quality'] == 'SD' and d.valid_url('', e['source'])])
+                                d_source_4k = len([e for e in self.sources if e['quality'] == '4K' and d.valid_url('', e['source'])])
+                                d_source_1080 = len([e for e in self.sources if e['quality'] in ['1440p','1080p'] and d.valid_url('', e['source'])])
+                                d_source_720 = len([e for e in self.sources if e['quality'] in ['720p','HD'] and d.valid_url('', e['source'])])
+                                d_source_sd = len([e for e in self.sources if e['quality'] == 'SD' and d.valid_url('', e['source'])])
                         elif quality in ['1']:
                             for d in debrid_list:
-                                rd_source_1080 = len([e for e in self.sources if e['quality'] in ['1440p','1080p'] and d.valid_url('', e['source'])])
-                                rd_source_720 = len([e for e in self.sources if e['quality'] in ['720p','HD'] and d.valid_url('', e['source'])])
-                                rd_source_sd = len([e for e in self.sources if e['quality'] == 'SD' and d.valid_url('', e['source'])])
+                                d_source_1080 = len([e for e in self.sources if e['quality'] in ['1440p','1080p'] and d.valid_url('', e['source'])])
+                                d_source_720 = len([e for e in self.sources if e['quality'] in ['720p','HD'] and d.valid_url('', e['source'])])
+                                d_source_sd = len([e for e in self.sources if e['quality'] == 'SD' and d.valid_url('', e['source'])])
                         elif quality in ['2']:
                             for d in debrid_list:
-                                rd_source_1080 = len([e for e in self.sources if e['quality'] in ['1080p'] and d.valid_url('', e['source'])])
-                                rd_source_720 = len([e for e in self.sources if e['quality'] in ['720p','HD'] and d.valid_url('', e['source'])])
-                                rd_source_sd = len([e for e in self.sources if e['quality'] == 'SD' and d.valid_url('', e['source'])])
+                                d_source_1080 = len([e for e in self.sources if e['quality'] in ['1080p'] and d.valid_url('', e['source'])])
+                                d_source_720 = len([e for e in self.sources if e['quality'] in ['720p','HD'] and d.valid_url('', e['source'])])
+                                d_source_sd = len([e for e in self.sources if e['quality'] == 'SD' and d.valid_url('', e['source'])])
                         elif quality in ['3']:
                             for d in debrid_list:
-                                rd_source_720 = len([e for e in self.sources if e['quality'] in ['720p','HD'] and d.valid_url('', e['source'])])
-                                rd_source_sd = len([e for e in self.sources if e['quality'] == 'SD' and d.valid_url('', e['source'])])
+                                d_source_720 = len([e for e in self.sources if e['quality'] in ['720p','HD'] and d.valid_url('', e['source'])])
+                                d_source_sd = len([e for e in self.sources if e['quality'] == 'SD' and d.valid_url('', e['source'])])
                         else:
                             for d in debrid_list:
-                                rd_source_sd = len([e for e in self.sources if e['quality'] == 'SD' and d.valid_url('', e['source'])])
+                                d_source_sd = len([e for e in self.sources if e['quality'] == 'SD' and d.valid_url('', e['source'])])
                                  
-                total = source_4k + source_1080 + source_720 + source_sd
-                d_total = rd_source_4k + rd_source_1080 + rd_source_720 + rd_source_sd
+                        d_total = d_source_4k + d_source_1080 + d_source_720 + d_source_sd
 
-                source_4k_label = '[COLOR red][B]%s[/B][/COLOR]' % source_4k if source_4k == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % source_4k
-                source_1080_label = '[COLOR red][B]%s[/B][/COLOR]' % source_1080 if source_1080 == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % source_1080
-                source_720_label = '[COLOR red][B]%s[/B][/COLOR]' % source_720 if source_720 == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % source_720
-                source_sd_label = '[COLOR red][B]%s[/B][/COLOR]' % source_sd if source_sd == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % source_sd
-                source_total_label = '[COLOR red][B]%s[/B][/COLOR]' % total if total == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % total
-                rd_4k_label = '[COLOR red][B]%s[/B][/COLOR]' % rd_source_4k if rd_source_4k == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % rd_source_4k
-                rd_1080_label = '[COLOR red][B]%s[/B][/COLOR]' % rd_source_1080 if rd_source_1080 == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % rd_source_1080
-                rd_720_label = '[COLOR red][B]%s[/B][/COLOR]' % rd_source_720 if rd_source_720 == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % rd_source_720
-                rd_sd_label = '[COLOR red][B]%s[/B][/COLOR]' % rd_source_sd if rd_source_sd == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % rd_source_sd
-                d_total_label = '[COLOR red][B]%s[/B][/COLOR]' % total if total == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % d_total
+                if debrid_status:
+                    source_4k_label = '[COLOR red][B]%s[/B][/COLOR]' % source_4k if source_4k == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % source_4k
+                    source_1080_label = '[COLOR red][B]%s[/B][/COLOR]' % source_1080 if source_1080 == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % source_1080
+                    source_720_label = '[COLOR red][B]%s[/B][/COLOR]' % source_720 if source_720 == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % source_720
+                    source_sd_label = '[COLOR red][B]%s[/B][/COLOR]' % source_sd if source_sd == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % source_sd
+                    source_total_label = '[COLOR red][B]%s[/B][/COLOR]' % total if total == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % total
+                    d_4k_label = '[COLOR red][B]%s[/B][/COLOR]' % d_source_4k if d_source_4k == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % d_source_4k
+                    d_1080_label = '[COLOR red][B]%s[/B][/COLOR]' % d_source_1080 if d_source_1080 == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % d_source_1080
+                    d_720_label = '[COLOR red][B]%s[/B][/COLOR]' % d_source_720 if d_source_720 == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % d_source_720
+                    d_sd_label = '[COLOR red][B]%s[/B][/COLOR]' % d_source_sd if d_source_sd == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % d_source_sd
+                    d_total_label = '[COLOR red][B]%s[/B][/COLOR]' % total if total == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % d_total
+                else:
+                    source_4k_label = '[COLOR red][B]%s[/B][/COLOR]' % source_4k if source_4k == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % source_4k
+                    source_1080_label = '[COLOR red][B]%s[/B][/COLOR]' % source_1080 if source_1080 == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % source_1080
+                    source_720_label = '[COLOR red][B]%s[/B][/COLOR]' % source_720 if source_720 == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % source_720
+                    source_sd_label = '[COLOR red][B]%s[/B][/COLOR]' % source_sd if source_sd == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % source_sd
+                    source_total_label = '[COLOR red][B]%s[/B][/COLOR]' % total if total == 0 else '[COLOR lime][B]%s[/B][/COLOR]' % total
 
                 if (i / 2) < timeout:
                     try:
                         mainleft = [sourcelabelDict[x.getName()] for x in threads if x.is_alive() == True and x.getName() in mainsourceDict]
                         info = [sourcelabelDict[x.getName()] for x in threads if x.is_alive() == True]
                         if i >= timeout and len(mainleft) == 0 and len(self.sources) >= 100 * len(info): break # improve responsiveness
-                        if debrid.status():
+                        if debrid_status:
                             if quality in ['0']:
-                                line1 = '%s: 4K: %s | 1080p: %s | 720p: %s | SD: %s | %s: %s' % (string6, rd_4k_label, rd_1080_label, rd_720_label, rd_sd_label, str(string4), d_total_label)
-                                line2 = '%s: 4K: %s | 1080p: %s | 720p: %s | SD: %s | %s: %s' % (string7, source_4k_label, source_1080_label, source_720_label, source_sd_label, str(string4), source_total_label)
+                                if not progressDialog == control.progressDialogBG:
+                                    line1 = '%s: 4K: %s | 1080p: %s | 720p: %s | SD: %s | %s: %s' % (string6, d_4k_label, d_1080_label, d_720_label, d_sd_label, str(string4), d_total_label)
+                                    line2 = '%s: 4K: %s | 1080p: %s | 720p: %s | SD: %s | %s: %s' % (string7, source_4k_label, source_1080_label, source_720_label, source_sd_label, str(string4), source_total_label)
+                                else:
+                                    line1 = '4K: %s(%s) | 1080p: %s(%s) | 720p: %s(%s) | SD: %s(%s)' % (source_4k_label, d_4k_label, source_1080_label, d_1080_label, source_720_label, d_720_label, source_sd_label, d_sd_label)
                             elif quality in ['1']:
-                                line1 = '%s: 1080p: %s | 720p: %s | SD: %s | %s: %s' % (string6, rd_1080_label, rd_720_label, rd_sd_label, str(string4), d_total_label)
-                                line2 = '%s: 1080p: %s | 720p: %s | SD: %s | %s: %s' % (string7, source_1080_label, source_720_label, source_sd_label, str(string4), source_total_label)
+                                if not progressDialog == control.progressDialogBG:
+                                    line1 = '%s: 1080p: %s | 720p: %s | SD: %s | %s: %s' % (string6, d_1080_label, d_720_label, d_sd_label, str(string4), d_total_label)
+                                    line2 = '%s: 1080p: %s | 720p: %s | SD: %s | %s: %s' % (string7, source_1080_label, source_720_label, source_sd_label, str(string4), source_total_label)
+                                else:
+                                    line1 = '1080p: %s(%s) | 720p: %s(%s) | SD: %s(%s) | Total: %s(%s)' % (source_1080_label, d_1080_label, source_720_label, d_720_label, source_sd_label, d_sd_label, source_total_label, d_total_label)
                             elif quality in ['2']:
-                                line1 = '%s: 1080p: %s | 720p: %s | SD: %s | %s: %s' % (string6, rd_1080_label, rd_720_label, rd_sd_label, str(string4), d_total_label)
-                                line2 = '%s: 1080p: %s | 720p: %s | SD: %s | %s: %s' % (string7, source_1080_label, source_720_label, source_sd_label, str(string4), source_total_label)
+                                if not progressDialog == control.progressDialogBG:
+                                    line1 = '%s: 1080p: %s | 720p: %s | SD: %s | %s: %s' % (string6, d_1080_label, d_720_label, d_sd_label, str(string4), d_total_label)
+                                    line2 = '%s: 1080p: %s | 720p: %s | SD: %s | %s: %s' % (string7, source_1080_label, source_720_label, source_sd_label, str(string4), source_total_label)
+                                else:
+                                    line1 = '1080p: %s(%s) | 720p: %s(%s) | SD: %s(%s) | Total: %s(%s)' % (source_1080_label, d_1080_label, source_720_label, d_720_label, source_sd_label, d_sd_label, source_total_label, d_total_label)
                             elif quality in ['3']:
-                                line1 = '%s: 720p: %s | SD: %s | %s: %s' % (string6, rd_720_label, rd_sd_label, str(string4), d_total_label)
-                                line2 = '%s: 720p: %s | SD: %s | %s: %s' % (string7, source_720_label, source_sd_label, str(string4), source_total_label)
+                                if not progressDialog == control.progressDialogBG:
+                                    line1 = '%s: 720p: %s | SD: %s | %s: %s' % (string6, d_720_label, d_sd_label, str(string4), d_total_label)
+                                    line2 = '%s: 720p: %s | SD: %s | %s: %s' % (string7, source_720_label, source_sd_label, str(string4), source_total_label)
+                                else:
+                                    line1 = '720p: %s(%s) | SD: %s(%s) | Total: %s(%s)' % (source_720_label, d_720_label, source_sd_label, d_sd_label, source_total_label, d_total_label)
                             else:
-                                line1 = '%s: SD: %s | %s  %s' % (string6, rd_sd_label, str(string4), d_total_label)
-                                line2 = '%s: SD: %s | %s: %s' % (string7, source_sd_label, str(string4), source_total_label)
+                                if not progressDialog == control.progressDialogBG:
+                                    line1 = '%s: SD: %s | %s  %s' % (string6, d_sd_label, str(string4), d_total_label)
+                                    line2 = '%s: SD: %s | %s: %s' % (string7, source_sd_label, str(string4), source_total_label)
+                                else:
+                                    line1 = 'SD: %s(%s) | Total: %s(%s)' % (source_sd_label, d_sd_label, source_total_label, d_total_label)
                         else:
                             if quality in ['0']:
                                 line1 = '4K:  %s  |  1080p:  %s  |  720p:  %s  |  SD:  %s  |  %s:  %s' % (source_4k_label, source_1080_label, source_720_label, source_sd_label, str(string4), source_total_label)
@@ -482,13 +504,13 @@ class sources:
                             else:
                                 line1 = 'SD:  %s  |  %s:  %s' % (source_sd_label, str(string4), source_total_label)
 
-                        if debrid.status():
+                        if debrid_status:
                             if len(info) > 6: line3 = string3 % (str(len(info)))
                             elif len(info) > 0: line3 = string3 % (', '.join(info))
                             else: break
                             percent = int(100 * float(i) / (2 * timeout) + 0.5)
-                            if progressDialog == control.progressDialogBG: progressDialog.update(max(1, percent), str(string4) + ': ' + str(len(self.sources)) + '    ')
-                            else: progressDialog.update(max(1, percent), line1, line2, line3)
+                            if not progressDialog == control.progressDialogBG: progressDialog.update(max(1, percent), line1, line2, line3)
+                            else: progressDialog.update(max(1, percent), line1, line3)
                         else:
                             if len(info) > 6: line2 = string3 % (str(len(info)))
                             elif len(info) > 0: line2 = string3 % (', '.join(info))
@@ -501,12 +523,13 @@ class sources:
                     try:
                         mainleft = [sourcelabelDict[x.getName()] for x in threads if x.is_alive() == True and x.getName() in mainsourceDict]
                         info = mainleft
-                        if debrid.status():
+                        if debrid_status:
                             if len(info) > 6: line3 = 'Waiting for: %s' % (str(len(info)))
                             elif len(info) > 0: line3 = 'Waiting for: %s' % (', '.join(info))
                             else: break
                             percent = int(100 * float(i) / (2 * timeout) + 0.5) % 100
-                            progressDialog.update(max(1, percent), line1, line2, line3)
+                            if not progressDialog == control.progressDialogBG: progressDialog.update(max(1, percent), line1, line2, line3)
+                            else: progressDialog.update(max(1, percent), line1, line3)
                         else:
                             if len(info) > 6: line2 = 'Waiting for: %s' % (str(len(info)))
                             elif len(info) > 0: line2 = 'Waiting for: %s' % (', '.join(info))
