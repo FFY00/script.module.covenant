@@ -3,7 +3,7 @@ import logging
 import random
 import re
 from requests.sessions import Session
-import js2py
+from resources.lib.modules import jsunfuck
 from copy import deepcopy
 
 try:
@@ -76,9 +76,8 @@ class CloudflareScraper(Session):
                           "before submitting a bug report.")
             raise
 
-        # Safely evaluate the Javascript expression
-        params["jschl_answer"] = str(int(js2py.eval_js(js)) + len(domain))
-
+        try: params["jschl_answer"] = str(int(jsunfuck.cfunfuck(js)) + len(domain))
+        except: pass
         # Requests transforms any request into a GET after a redirect,
         # so the redirect has to be handled manually here to allow for
         # performing other types of requests even as the first request.
