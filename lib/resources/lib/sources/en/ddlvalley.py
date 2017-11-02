@@ -80,17 +80,16 @@ class source:
             data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
 
             title = data['tvshowtitle'] if 'tvshowtitle' in data else data['title']
-            url = data['url']
-            year = data['year']
+            hdlr = 'S%02dE%02d' % (int(data['season']), int(data['episode'])) if 'tvshowtitle' in data else data['year']
+            query = '%s S%02dE%02d' % (data['tvshowtitle'], int(data['season']), int(data['episode'])) if\
+                'tvshowtitle' in data else '%s %s' % (data['title'], data['year'])
+            query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
 
-            headers = {'Host': 'www.ddlvalley.me',
-                        'Upgrade-Insecure-Requests': '1',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
-                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-                        'Accept-Encoding': 'gzip, deflate',
-                        'Accept-Language': 'en-US,en;q=0.8'}
+            url = self.search_link % urllib.quote_plus(query)
+            url = urlparse.urljoin(self.base_link, url)
             scraper = cfscrape.create_scraper()
             r = scraper.get(url).content
+
             items = dom_parser2.parse_dom(r, 'h2')
             items = [dom_parser2.parse_dom(i.content, 'a', req=['href','rel','title','data-wpel-link']) for i in items]
             items = [(i[0].content, i[0].attrs['href']) for i in items]
@@ -108,7 +107,7 @@ class source:
                     links = [i.attrs['href'] for i in links]
                     for url in links:
                         try:
-                            if year in name:
+                            if hdlr in name:
                                 fmt = re.sub('(.+)(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*)(\.|\)|\]|\s)', '', name.upper())
                                 fmt = re.split('\.|\(|\)|\[|\]|\s|\-', fmt)
                                 fmt = [i.lower() for i in fmt]
