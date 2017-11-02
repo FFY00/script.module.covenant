@@ -90,13 +90,17 @@ class source:
             for el in result :
                 desc = el.content
                 info = desc[desc.find("(") + 1:desc.find(")")]
+                lang = 'pl'
+                if info.lower() == 'eng':
+                    lang='en'
+                    info=None
                 link = el.attrs['href']                                 
                 
                 valid, host = source_utils.is_host_valid(link, hostDict)
                 if not valid: continue
                 q = source_utils.check_sd_url(link)
                 
-                sources.append({'source': host, 'quality': q, 'language': 'pl', 'url': link, 'info': info, 'direct': False, 'debridonly': False})
+                sources.append({'source': host, 'quality': q, 'language': lang, 'url': link, 'info': info, 'direct': False, 'debridonly': False})
             
             first_found['info'] = self.get_info_from_others(sources)
             sources.append(first_found)
