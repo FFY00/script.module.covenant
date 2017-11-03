@@ -177,7 +177,7 @@ class JSUnfuck(object):
         n = {'!+[]+!![]+!![]+!![]+!![]+!![]+!![]+!![]+!![]': '9',
              '!+[]+!![]+!![]+!![]+!![]': '5', '!+[]+!![]+!![]+!![]': '4',
              '!+[]+!![]+!![]+!![]+!![]+!![]': '6', '!+[]+!![]': '2',
-             '!+[]+!![]+!![]': '3', '(+![]+([]+[]))': '0', '(+[]+[])': '0',
+             '!+[]+!![]+!![]': '3', '(+![]+([]+[]))': '0', '(+[]+[])': '0', '+[]':'0',
              '(+!![]+[])': '1', '!+[]+!![]+!![]+!![]+!![]+!![]+!![]': '7',
              '!+[]+!![]+!![]+!![]+!![]+!![]+!![]+!![]': '8', '+!![]': '1',
              '[+[]]': '[0]', '!+[]+!+[]': '2', '[+!+[]]': '[1]', '(+20)': '20',
@@ -229,21 +229,20 @@ class JSUnfuck(object):
 
             
 def cfunfuck(fuckedup):
-    fuck = re.findall(r's,t,o,p,b,r,e,a,k,i,n,g,f,\s*(\w+=).*?:([^};]+)', fuckedup)
-    fucks = re.findall(r'(\w+)\.\w+([\+\-\*\/]=)([^;]+)', fuckedup)
+    fuck = re.findall(r's,t,o,p,b,r,e,a,k,i,n,g,f,\s*(\w+=).*?:\+?\(?(.*?)\)?\}', fuckedup)
+    fucks = re.findall(r'(\w+)\.\w+([\+\-\*\/]=)\+?\(?(.*?)\)?;', fuckedup)
     endunfuck = fuck[0][0].split('=')[0]
     unfuck = JSUnfuck(fuck[0][1]).decode()
-    unfuck = unfuck.replace('(','')
-    unfuck = unfuck.replace(')','')
+    unfuck = re.sub(r'[\(\)]', '', unfuck)
     unfuck = fuck[0][0]+unfuck
     exec(unfuck)
 
     for fucker in fucks:
         unfucker = JSUnfuck(fucker[2]).decode()
-        unfucker = unfucker.replace('(','')
-        unfucker = unfucker.replace(')','')
+        unfucker = re.sub(r'[\(\)]', '', unfucker)
         unfucker = fucker[0]+fucker[1]+unfucker
         exec(unfucker)
+        
     return str(eval(endunfuck))
 
 def main():
