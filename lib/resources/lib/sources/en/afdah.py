@@ -25,38 +25,39 @@ import re,json,urllib,urlparse
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
 from resources.lib.modules import directstream
-
+from resources.lib.modules import source_utils
 
 class source:
     def __init__(self):
         self.priority = 1
         self.language = ['en']
         self.domains = ['afdah.to']
-        self.base_link = 'https://afdah.to'
-        self.search_link = '/results?q=%s'
+        self.base_link = 'http://afdah.to'
+        self.search_link = '/wp-content/themes/afdah/ajax-search.php'
 
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
-            query = self.search_link % (urllib.quote_plus(title))
-            query = urlparse.urljoin(self.base_link, query)
 
-            c, h = self.__get_cookies(query)
+            query = urlparse.urljoin(self.base_link, self.search_link)
+            post = 'apple=%s&banana=title' % cleantitle.getsearch(title)
+
+            #c, h = self.__get_cookies(query)
 
             t = cleantitle.get(title)
 
-            r = client.request(query, headers=h, cookie=c)
-
-            r = client.parseDOM(r, 'div', attrs={'class': 'cell_container'})
-            r = [(client.parseDOM(i, 'a', ret='href'), client.parseDOM(i, 'a', ret='title')) for i in r]
+            r = client.request(query, post=post)
+            r = client.parseDOM(r, 'li')
+            r = [(client.parseDOM(i, 'a', ret='href'), client.parseDOM(i, 'a',)) for i in r]
             r = [(i[0][0], i[1][0]) for i in r if len(i[0]) > 0 and len(i[1]) > 0]
             r = [(i[0], re.findall('(.+?) \((\d{4})', i[1])) for i in r]
             r = [(i[0], i[1][0][0], i[1][0][1]) for i in r if len(i[1]) > 0]
             r = [i[0] for i in r if t == cleantitle.get(i[1]) and year == i[2]][0]
 
-            url = re.findall('(?://.+?|)(/.+)', r)[0]
+            url = urlparse.urljoin(self.base_link, re.findall('(?://.+?|)(/.+)', r)[0])
             url = client.replaceHTMLCodes(url)
             url = url.encode('utf-8')
+            print url
             return url
         except:
             return
@@ -69,23 +70,17 @@ class source:
             if not url:
                 return sources
 
-            referer = urlparse.urljoin(self.base_link, url)
-
-            c, h = self.__get_cookies(referer)
-
-            try: post = urlparse.parse_qs(urlparse.urlparse(referer).query).values()[0][0]
-            except: post = referer.strip('/').split('/')[-1].split('watch_', 1)[-1].rsplit('#')[0].rsplit('.')[0]
-
-            post = urllib.urlencode({'v': post})
-
-            url = urlparse.urljoin(self.base_link, '/video_info/iframe')
-
-            r = client.request(url, post=post, headers=h, cookie=c, XHR=True, referer=referer)
-            r = json.loads(r).values()
-            r = [urllib.unquote(i.split('url=')[-1]) for i in r]
-
-            for i in r:
-                try: sources.append({'source': 'gvideo', 'quality': directstream.googletag(i)[0]['quality'], 'language': 'en', 'url': i, 'direct': True, 'debridonly': False})
+            r = client.request(url, redirect=True)
+            #data = client.parseDOM(r, 'div', attrs={'id': 'cont_\d+'})
+            data2 = client.parseDOM(r, 'tr')
+            #links = [client.parseDOM(i, 'div', ret='data-id') for i in data if not 'trailer' in i]
+            links = [client.parseDOM(i, 'a', ret='href') for i in data2]
+            links = [i[0] for i in links if i]
+            for url in links:
+                try:
+                    valid, host = source_utils.is_host_valid(url, hostDict)
+                    if not valid: continue
+                    sources.append({'source': host, 'quality': 'SD', 'language': 'en', 'url': url, 'direct': False, 'debridonly': False})
                 except: pass
 
             return sources

@@ -25,7 +25,7 @@ from resources.lib.modules import source_utils
 
 class source:
     def __init__(self):
-        self.priority = 1
+        self.priority = 0
         self.language = ['en']
         self.domains = ['hdpopcorns.com']
         self.base_link = 'http://hdpopcorns.com'

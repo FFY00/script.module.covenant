@@ -36,8 +36,6 @@ class source:
         self.base_link = 'https://seriesfree.to'
         self.search_link = 'https://seriesfree.to/search/%s'
 
-
-
     def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
         try:
             query = self.search_link % urllib.quote_plus(cleantitle.query(tvshowtitle))

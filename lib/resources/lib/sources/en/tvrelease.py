@@ -24,15 +24,16 @@ import re,urllib,urlparse
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
 from resources.lib.modules import debrid
+from resources.lib.modules import source_utils
+from resources.lib.modules import dom_parser2
 
 class source:
     def __init__(self):
-        self.priority = 1
+        self.priority = 0
         self.language = ['en']
-        self.domains = ['myddl.pw','xtremeli.pw']
-        self.base_link = 'http://xtremeli.pw'
-        self.search_link = '/search/%s/feed/rss2/'
-
+        self.domains = ['tv-release.pw', 'tv-release.immunicity.st']
+        self.base_link = 'http://tv-release.pw'
+        self.search_link = '?s=%s'
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
@@ -42,7 +43,6 @@ class source:
         except:
             return
 
-
     def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
         try:
             url = {'imdb': imdb, 'tvdb': tvdb, 'tvshowtitle': tvshowtitle, 'year': year}
@@ -50,7 +50,6 @@ class source:
             return url
         except:
             return
-
 
     def episode(self, url, imdb, tvdb, title, premiered, season, episode):
         try:
@@ -71,7 +70,7 @@ class source:
 
             if url == None: return sources
 
-            if debrid.status() == False: raise Exception()
+            if not debrid.status(): raise Exception()
 
             data = urlparse.parse_qs(url)
             data = dict([(i, data[i][0]) if data[i] else (i, '') for i in data])
@@ -87,30 +86,30 @@ class source:
             url = urlparse.urljoin(self.base_link, url)
 
             r = client.request(url)
-
-            posts = client.parseDOM(r, 'item')
+            r = client.parseDOM(r, 'h2')
+            r = [re.findall('''<a.+?href=["']([^"']+)["']>(.+?)</a>''', i, re.DOTALL) for i in r]
 
             hostDict = hostprDict + hostDict
 
             items = []
 
-            for post in posts:
+            for item in r:
                 try:
-                    t = client.parseDOM(post, 'title')[0]
+                    t = item[0][1]
+                    t = re.sub('(\[.*?\])|(<.+?>)', '', t)
+                    t1 = re.sub('(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*|3D)(\.|\)|\]|\s|)(.+|)', '', t)
 
-                    c = client.parseDOM(post, 'content.+?')[0]
+                    if not cleantitle.get(t1) == cleantitle.get(title): raise Exception()
 
-                    u = client.parseDOM(c, 'p')
-                    u = [client.parseDOM(i, 'a', ret='href') for i in u]
-                    u = [i[0] for i in u if len(i) == 1]
-                    if not u: raise Exception()
+                    y = re.findall('[\.|\(|\[|\s](\d{4}|S\d*E\d*|S\d*)[\.|\)|\]|\s]', t)[-1].upper()
 
-                    if 'tvshowtitle' in data:
-                         u = [(re.sub('(720p|1080p)', '', t) + ' ' + [x for x in i.strip('//').split('/')][-1], i) for i in u]
-                    else:
-                         u = [(t, i) for i in u]
+                    if not y == hdlr: raise Exception()
 
+                    data = client.request(urlparse.urljoin(self.base_link, item[0][0]))
+                    data = dom_parser2.parse_dom(data, 'a', attrs={'target': '_blank'})
+                    u = [(t, i.content) for i in data]
                     items += u
+
                 except:
                     pass
 
@@ -119,32 +118,10 @@ class source:
                     name = item[0]
                     name = client.replaceHTMLCodes(name)
 
-                    t = re.sub('(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*|3D)(\.|\)|\]|\s|)(.+|)', '', name)
-                    if not cleantitle.get(t) == cleantitle.get(title): raise Exception()
-
-                    y = re.findall('[\.|\(|\[|\s](\d{4}|S\d*E\d*|S\d*)[\.|\)|\]|\s]', name)[-1].upper()
-
-                    if not y == hdlr: raise Exception()
-
-                    fmt = re.sub('(.+)(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*)(\.|\)|\]|\s)', '', name.upper())
-                    fmt = re.split('\.|\(|\)|\[|\]|\s|\-', fmt)
-                    fmt = [i.lower() for i in fmt]
-
-                    if any(i.endswith(('subs', 'sub', 'dubbed', 'dub')) for i in fmt): raise Exception()
-                    if any(i in ['extras'] for i in fmt): raise Exception()
-
-                    if '1080p' in fmt: quality = '1080p'
-                    elif '720p' in fmt: quality = 'HD'
-                    else: quality = 'SD'
-                    if any(i in ['dvdscr', 'r5', 'r6'] for i in fmt): quality = 'SCR'
-                    elif any(i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i in fmt): quality = 'CAM'
-
-                    info = []
-
-                    if '3d' in fmt: info.append('3D')
+                    quality, info = source_utils.get_release_quality(name, item[1])
 
                     try:
-                        size = re.findall('((?:\d+\.\d+|\d+\,\d+|\d+) (?:GB|GiB|MB|MiB))', item[2])[-1]
+                        size = re.findall('((?:\d+\.\d+|\d+\,\d+|\d+) (?:GB|GiB|MB|MiB))', name)[-1]
                         div = 1 if size.endswith(('GB', 'GiB')) else 1024
                         size = float(re.sub('[^0-9|/.|/,]', '', size))/div
                         size = '%.2f GB' % size
@@ -152,17 +129,16 @@ class source:
                     except:
                         pass
 
-                    if any(i in ['hevc', 'h265', 'x265'] for i in fmt): info.append('HEVC')
-
                     info = ' | '.join(info)
 
                     url = item[1]
+                    if not url.startswith('http'):continue
                     if any(x in url for x in ['.rar', '.zip', '.iso']): raise Exception()
                     url = client.replaceHTMLCodes(url)
                     url = url.encode('utf-8')
 
-                    host = re.findall('([\w]+[.][\w]+)$', urlparse.urlparse(url.strip().lower()).netloc)[0]
-                    if not host in hostDict: raise Exception()
+                    valid, host = source_utils.is_host_valid(url, hostDict)
+                    if not valid: continue
                     host = client.replaceHTMLCodes(host)
                     host = host.encode('utf-8')
 
@@ -180,5 +156,3 @@ class source:
 
     def resolve(self, url):
         return url
-
-
