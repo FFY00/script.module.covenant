@@ -28,7 +28,7 @@ class source:
     def __init__(self):
         self.priority = 1
         self.language = ['pl']
-        self.domains = ['paczamy.pl']
+        self.domains = ['openkatalog.com']
         
         self.base_link = 'https://openkatalog.com'
         self.search_link = '/?s=%s'
