@@ -901,7 +901,7 @@ class sources:
                 label = re.sub('\[I\]\s+\[/I\]', ' ', label)
                 label = re.sub('\|\s+\|', '|', label)
                 label = re.sub('\|(?:\s+|)$', '', label)
-
+            
                 if d: 
                     if not prem_identify == 'nocolor':
                         self.sources[i]['label'] = ('[COLOR %s]' % (prem_identify)) + label.upper() + '[/COLOR]'
@@ -911,7 +911,9 @@ class sources:
         try: 
             if not HEVC == 'true': self.sources = [i for i in self.sources if not 'HEVC' in i['label']]
         except: pass
-
+        
+        self.sources = [i for i in self.sources if 'label' in i]
+        
         return self.sources
 
 
@@ -973,13 +975,11 @@ class sources:
             return
 
 
-    def sourcesDialog(self, items, addon_name=''):
+    def sourcesDialog(self, items):
         try:
-        
-            if addon_name == 'Bennu':
-                labels = [re.sub('\d+\s*\|\s*', '', i['label']) for i in items]
-            else:
-                labels = [i['label'] for i in items]
+            #log_utils.log('%s' % str(items), log_utils.LOGNOTICE)
+            
+            labels = [i['label'] for i in items]
 
             select = control.selectDialog(labels)
             if select == -1: return 'close://'
@@ -1060,9 +1060,10 @@ class sources:
             try: progressDialog.close()
             except: pass
 
-        except:
+        except Exception as e:
             try: progressDialog.close()
             except: pass
+            log_utils.log('Error %s' % str(e), log_utils.LOGNOTICE)
 
 
     def sourcesDirect(self, items):
