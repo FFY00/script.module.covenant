@@ -35,7 +35,6 @@ class source:
         self.base_link = 'http://afdah.to'
         self.search_link = '/wp-content/themes/afdah/ajax-search.php'
 
-
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
 
@@ -69,9 +68,7 @@ class source:
     def sources(self, url, hostDict, hostprDict):
         sources = []
 
-
         try:
-
             if not url:
                 return sources
             surl = []
@@ -120,15 +117,6 @@ class source:
             return sources
         except:
             return sources
-
-    def __get_cookies(self, url):
-        h = {'User-Agent': client.randomagent()}
-
-        c = client.request(url, headers=h, output='cookie')
-        c = client.request(urlparse.urljoin(self.base_link, '/av'), cookie=c, output='cookie', headers=h, referer=url)
-        c = client.request(url, cookie=c, headers=h, referer=url, output='cookie')
-
-        return c, h
 
     def resolve(self, url):
         return url
