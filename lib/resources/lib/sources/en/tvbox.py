@@ -46,7 +46,6 @@ class source:
             m = [(urlparse.urljoin(self.base_link,i[0]), i[1]) for i in m if
                  cleantitle.get(title) == cleantitle.get(i[1])]
             url = m[0][0]
-
             return url
         except:
             return
@@ -61,7 +60,6 @@ class source:
             m = [(urlparse.urljoin(self.base_link, i[0]), i[1]) for i in m if
                  cleantitle.get(tvshowtitle) == cleantitle.get(i[1])]
             url = m[0][0]
-            print url
             return url
         except:
             return
@@ -82,7 +80,6 @@ class source:
             result = re.findall(r'<h\d>Season\s+%s<\/h\d>(.*?<\/table>)' % season, result)[0]
             result = dom_parser.parse_dom(result, 'a', attrs={'href': re.compile('.*?episode-%s/' % episode)}, req='href')[0]
             url = result.attrs['href']
-
             url = url.encode('utf-8')
             return url
         except:
@@ -120,7 +117,6 @@ class source:
             return sources
         except:
             return sources
-
 
     def resolve(self, url):
         return url
