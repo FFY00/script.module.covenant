@@ -12,3 +12,5 @@ cache/*
 .git/
 .gitignore
 bennustreams.py
+*.suo
+*.pyproj
