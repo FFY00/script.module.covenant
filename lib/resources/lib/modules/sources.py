@@ -797,6 +797,8 @@ class sources:
         self.sources = filter
 
         filter = []
+        
+
         for d in debrid.debrid_resolvers:
             valid_hoster = set([i['source'] for i in self.sources])
             valid_hoster = [i for i in valid_hoster if d.valid_url('', i)]
@@ -850,70 +852,63 @@ class sources:
         extra_info = control.setting('sources.extrainfo')
         prem_identify = control.setting('prem.identify')
         if prem_identify == '': prem_identify = 'blue'
-        prem_identify = self.getPremColor(prem_identify)
-        
-        urls = []
+        prem_identify = self.getPremColor(prem_identify)        
         
         for i in range(len(self.sources)):
-           
-            if not self.sources[i]['url'] in urls:
-        
-                urls += [(self.sources[i]['url'])]
-
-                if extra_info == 'true': t = source_utils.getFileType(self.sources[i]['url'])
-                else: t = None
-                
-                u = self.sources[i]['url']
-
-                p = self.sources[i]['provider']
-
-                q = self.sources[i]['quality']
-
-                s = self.sources[i]['source']
-                
-                s = s.rsplit('.', 1)[0]
-
-                l = self.sources[i]['language']
-
-                try: f = (' | '.join(['[I]%s [/I]' % info.strip() for info in self.sources[i]['info'].split('|')]))
-                except: f = ''
-
-                try: d = self.sources[i]['debrid']
-                except: d = self.sources[i]['debrid'] = ''
-
-                if not d == '': label = '%02d | [B]%s[/B] | ' % (int(i+1), d)
-                #if not d == '': label = '%02d | [B]%s[/B] | [B]%s[/B] | ' % (int(i+1), p, d)
-                else: label = '%02d | [B]%s[/B] | ' % (int(i+1), p)
-
-                if multi == True and not l == 'en': label += '[B]%s[/B] | ' % l
-
-                ### if q in ['4K', '1440p', '1080p', 'HD']: label += '%s | %s | [B][I]%s [/I][/B]' % (s, f, q)
-                if t:
-                    if q in ['4K', '1440p', '1080p', '720p']: label += '%s | [B][I]%s [/I][/B] | [I]%s[/I] | %s' % (s, q, t, f)
-                    elif q == 'SD': label += '%s | %s | [I]%s[/I]' % (s, f, t)
-                    else: label += '%s | %s | [I]%s [/I] | [I]%s[/I]' % (s, f, q, t)
-                else:
-                    if q in ['4K', '1440p', '1080p', '720p']: label += '%s | [B][I]%s [/I][/B] | %s' % (s, q, f)
-                    elif q == 'SD': label += '%s | %s' % (s, f)
-                    else: label += '%s | %s | [I]%s [/I]' % (s, f, q)
-                label = label.replace('| 0 |', '|').replace(' | [I]0 [/I]', '')
-                #label = label.replace('[I]HEVC [/I]', 'HEVC')
-                label = re.sub('\[I\]\s+\[/I\]', ' ', label)
-                label = re.sub('\|\s+\|', '|', label)
-                label = re.sub('\|(?:\s+|)$', '', label)
+                       
+            if extra_info == 'true': t = source_utils.getFileType(self.sources[i]['url'])
+            else: t = None
             
-                if d: 
-                    if not prem_identify == 'nocolor':
-                        self.sources[i]['label'] = ('[COLOR %s]' % (prem_identify)) + label.upper() + '[/COLOR]'
-                    else: self.sources[i]['label'] = label.upper()
+            u = self.sources[i]['url']
+
+            p = self.sources[i]['provider']
+
+            q = self.sources[i]['quality']
+
+            s = self.sources[i]['source']
+            
+            s = s.rsplit('.', 1)[0]
+
+            l = self.sources[i]['language']
+
+            try: f = (' | '.join(['[I]%s [/I]' % info.strip() for info in self.sources[i]['info'].split('|')]))
+            except: f = ''
+
+            try: d = self.sources[i]['debrid']
+            except: d = self.sources[i]['debrid'] = ''
+
+            if d.lower() == 'real-debrid': d = 'RD'
+
+            if not d == '': label = '%02d | [B]%s | %s[/B] | ' % (int(i+1), d, p)
+            else: label = '%02d | [B]%s[/B] | ' % (int(i+1), p)
+
+            if multi == True and not l == 'en': label += '[B]%s[/B] | ' % l
+
+            if t:
+                if q in ['4K', '1440p', '1080p', '720p']: label += '%s | [B][I]%s [/I][/B] | [I]%s[/I] | %s' % (s, q, t, f)
+                elif q == 'SD': label += '%s | %s | [I]%s[/I]' % (s, f, t)
+                else: label += '%s | %s | [I]%s [/I] | [I]%s[/I]' % (s, f, q, t)
+            else:
+                if q in ['4K', '1440p', '1080p', '720p']: label += '%s | [B][I]%s [/I][/B] | %s' % (s, q, f)
+                elif q == 'SD': label += '%s | %s' % (s, f)
+                else: label += '%s | %s | [I]%s [/I]' % (s, f, q)
+            label = label.replace('| 0 |', '|').replace(' | [I]0 [/I]', '')
+            label = re.sub('\[I\]\s+\[/I\]', ' ', label)
+            label = re.sub('\|\s+\|', '|', label)
+            label = re.sub('\|(?:\s+|)$', '', label)
+            
+            if d: 
+                if not prem_identify == 'nocolor':
+                    self.sources[i]['label'] = ('[COLOR %s]' % (prem_identify)) + label.upper() + '[/COLOR]'
                 else: self.sources[i]['label'] = label.upper()
+            else: self.sources[i]['label'] = label.upper()
 
         try: 
             if not HEVC == 'true': self.sources = [i for i in self.sources if not 'HEVC' in i['label']]
         except: pass
-        
+            
         self.sources = [i for i in self.sources if 'label' in i]
-        
+    
         return self.sources
 
 
@@ -977,7 +972,6 @@ class sources:
 
     def sourcesDialog(self, items):
         try:
-            #log_utils.log('%s' % str(items), log_utils.LOGNOTICE)
             
             labels = [i['label'] for i in items]
 
