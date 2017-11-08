@@ -91,11 +91,26 @@ def request(url, close=True, redirect=True, error=False, proxy=None, post=None, 
 
         if redirect == False:
 
-            class NoRedirection(urllib2.HTTPErrorProcessor):
-                def http_response(self, request, response): return response
+            #old implementation
+            #class NoRedirection(urllib2.HTTPErrorProcessor):
+            #    def http_response(self, request, response): return response
 
-            opener = urllib2.build_opener(NoRedirection)
-            opener = urllib2.install_opener(opener)
+            #opener = urllib2.build_opener(NoRedirection)
+            #opener = urllib2.install_opener(opener)
+
+            class NoRedirectHandler(urllib2.HTTPRedirectHandler):
+                def http_error_302(self, req, fp, code, msg, headers):
+                    infourl = urllib.addinfourl(fp, headers, req.get_full_url())
+                    infourl.status = code
+                    infourl.code = code
+                    return infourl
+                http_error_300 = http_error_302
+                http_error_301 = http_error_302
+                http_error_303 = http_error_302
+                http_error_307 = http_error_302
+
+            opener = urllib2.build_opener(NoRedirectHandler())
+            urllib2.install_opener(opener)
 
             try: del _headers['Referer']
             except: pass
@@ -311,7 +326,7 @@ def randomagent():
          '40.0.2214.115', '42.0.2311.90', '42.0.2311.135', '42.0.2311.152', '43.0.2357.81', '43.0.2357.124', '44.0.2403.155', '44.0.2403.157', '45.0.2454.101',
          '45.0.2454.85', '46.0.2490.71',
          '46.0.2490.80', '46.0.2490.86', '47.0.2526.73', '47.0.2526.80', '48.0.2564.116', '49.0.2623.112', '50.0.2661.86', '51.0.2704.103', '52.0.2743.116',
-         '53.0.2785.143', '54.0.2840.71'],
+         '53.0.2785.143', '54.0.2840.71', '61.0.3163.100'],
         ['11.0'],
         ['8.0', '9.0', '10.0', '10.6']]
     WIN_VERS = ['Windows NT 10.0', 'Windows NT 7.0', 'Windows NT 6.3', 'Windows NT 6.2', 'Windows NT 6.1', 'Windows NT 6.0', 'Windows NT 5.1', 'Windows NT 5.0']
