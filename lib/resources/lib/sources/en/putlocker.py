@@ -139,7 +139,6 @@ class source:
             headers['Accept-Encoding'] = 'gzip,deflate,br'
             headers['Referer'] = url
 
-
             u = '/ajax/tnembedr.php'
             self.base_link = client.request(self.base_link, headers=headers, output='geturl')
             u = urlparse.urljoin(self.base_link, u)
@@ -179,7 +178,9 @@ class source:
                         resp = client.request(i, headers=newheaders, redirect=False, output='extended', timeout='10')
                         loc = resp[2]['Location']
                         c = resp[2]['Set-Cookie'].split(';')[0]
-                        i = '%s|Cookie=%s' % (loc, c)                        
+                        i = '%s|Cookie=%s' % (loc, c)
+                        urls, host, direct = [{'quality': 'SD', 'url': i}], 'gvideo', True    
+                                            
                     except: 
                         pass
 
@@ -191,7 +192,8 @@ class source:
                         sources.append({'source': 'gvideo', 'quality': quali, 'language': 'en', 'url': i, 'direct': True, 'debridonly': False})
                         continue
                     valid, hoster = source_utils.is_host_valid(i, hostDict)
-                    urls, host, direct = source_utils.check_directstreams(i, hoster)
+                    if not urls or urls == []:
+                        urls, host, direct = source_utils.check_directstreams(i, hoster)
                     if valid:
                          for x in urls:
                              if host == 'gvideo':
