@@ -88,9 +88,6 @@ class source:
             url = urlparse.urljoin(self.base_link, url)
             scraper = cfscrape.create_scraper()
             r = scraper.get(url).content
-            cookie = 'cf_clearance=%s'%scraper.cookies.get('cf_clearance')
-            headers = scraper.headers
-            headers['Cookie'] = cookie
             u = r
             
             next_page = True
