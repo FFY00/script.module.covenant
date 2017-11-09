@@ -163,7 +163,7 @@ class source:
             for i in r:
                 #try: sources.append({'source': 'gvideo', 'quality': directstream.googletag(i)[0]['quality'], 'language': 'en', 'url': i, 'direct': True, 'debridonly': False})
                 #except: pass
-                if 'googleusercontent' in i:
+                if 'googleusercontent' in i or 'blogspot' in i:
                     try:
                         newheaders = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
                                'Accept': '*/*',
