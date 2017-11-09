@@ -89,6 +89,9 @@ class source:
             url = urlparse.urljoin(self.base_link, url)
             scraper = cfscrape.create_scraper()
             r = scraper.get(url).content
+            cookie = 'cf_clearance=%s'%scraper.cookies.get('cf_clearance')
+            headers = scraper.headers
+            headers['Cookie'] = cookie
 
             items = dom_parser2.parse_dom(r, 'h2')
             items = [dom_parser2.parse_dom(i.content, 'a', req=['href','rel','title','data-wpel-link']) for i in items]
@@ -101,8 +104,8 @@ class source:
                     name = item[0]
                     name = client.replaceHTMLCodes(name)
 
-                    scraper = cfscrape.create_scraper()
-                    r = scraper.get(item[1]).content     
+                    r = client.request(item[1], headers=headers, cookie=cookie)  
+
                     links = dom_parser2.parse_dom(r, 'a', req=['href','rel','data-wpel-link','target'])
                     links = [i.attrs['href'] for i in links]
                     for url in links:
