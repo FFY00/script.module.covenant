@@ -82,8 +82,8 @@ class source:
             url = self.search_link % urllib.quote_plus(query)
             url = urlparse.urljoin(self.base_link, url)
 
-            scraper = cfscrape.create_scraper()
-            r = scraper.get(url).content
+            self.scraper = cfscrape.create_scraper()
+            r = self.scraper.get(url).content
             posts = client.parseDOM(r, 'li')
 
             for post in posts:
@@ -130,8 +130,7 @@ class source:
 
     def movie_links(self, link):
         try:
-            scraper = cfscrape.create_scraper()
-            data = scraper.get(link).content
+            data = self.scraper.get(link).content
             data = client.parseDOM(data, 'div', attrs={'class': 'thecontent'})[0]
             FN720p = client.parseDOM(data, 'input', ret='value', attrs={'name': 'FileName720p'})[0]
             FS720p = client.parseDOM(data, 'input', ret='value', attrs={'name': 'FileSize720p'})[0]
@@ -154,8 +153,7 @@ class source:
 
     def show_links(self, link, sep):
         try:
-            scraper = cfscrape.create_scraper()
-            data = scraper.get(link).content
+            data = self.scraper.get(link).content
             data = client.parseDOM(data, 'div', attrs={'class': 'container'})
             data = client.parseDOM(data, 'tbody')
             u = client.parseDOM(data, 'tr')
