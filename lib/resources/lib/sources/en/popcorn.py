@@ -22,6 +22,8 @@ import urllib, urlparse, re
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
 from resources.lib.modules import source_utils
+from resources.lib.modules import cfscrape
+from resources.lib.modules import dom_parser2
 
 class source:
     def __init__(self):
@@ -29,7 +31,7 @@ class source:
         self.language = ['en']
         self.domains = ['hdpopcorns.com']
         self.base_link = 'http://hdpopcorns.com'
-        self.search_link = '/search/%s/feed/rss2/'
+        self.search_link = '/wp-admin/admin-ajax.php?action=mts_search&q=%s'
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
@@ -78,23 +80,23 @@ class source:
             query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
 
             url = self.search_link % urllib.quote_plus(query)
-
             url = urlparse.urljoin(self.base_link, url)
 
-            r = client.request(url)
-
-            posts = client.parseDOM(r, 'item')
+            self.scraper = cfscrape.create_scraper()
+            r = self.scraper.get(url).content
+            posts = client.parseDOM(r, 'li')
 
             for post in posts:
                 try:
-                    t = client.parseDOM(post, 'title')[0]
+                    data = dom_parser2.parse_dom(post, 'a', req='href')[0]
+                    t = re.findall('title=.+?>\s*(.+?)$', data.content, re.DOTALL)[0]
                     t2 = re.sub('(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*|3D)(\.|\)|\]|\s|)(.+|)', '', t)
                     y = re.findall('[\.|\(|\[|\s](S\d*E\d*|Season\s*\d*|\d{4})[\.|\)|\]|\s]', t)[-1]
 
                     if not (cleantitle.get_simple(t2.replace('720p / 1080p', '')) == cleantitle.get(
                         title) and y == hdlr): raise Exception()
 
-                    link = client.parseDOM(post, 'link')[0]
+                    link = client.parseDOM(post, 'a', ret='href')[0]
                     if not 'Episodes' in post: u = self.movie_links(link)
                     else:
                         sep = 'S%02dE%02d' % (int(data['season']), int(data['episode']))
@@ -128,7 +130,7 @@ class source:
 
     def movie_links(self, link):
         try:
-            data = client.request(link)
+            data = self.scraper.get(link).content
             data = client.parseDOM(data, 'div', attrs={'class': 'thecontent'})[0]
             FN720p = client.parseDOM(data, 'input', ret='value', attrs={'name': 'FileName720p'})[0]
             FS720p = client.parseDOM(data, 'input', ret='value', attrs={'name': 'FileSize720p'})[0]
@@ -151,7 +153,7 @@ class source:
 
     def show_links(self, link, sep):
         try:
-            data = client.request(link)
+            data = self.scraper.get(link).content
             data = client.parseDOM(data, 'div', attrs={'class': 'container'})
             data = client.parseDOM(data, 'tbody')
             u = client.parseDOM(data, 'tr')

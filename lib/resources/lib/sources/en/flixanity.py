@@ -32,7 +32,8 @@ class source:
         self.language = ['en']
         self.domains = ['movieshd.tv', 'movieshd.is', 'movieshd.watch', 'flixanity.is', 'flixanity.me','istream.is','flixanity.online']
         self.base_link = 'https://flixanity.online'
-
+        self.streampost = 'ajax/zuxkvfdvfn.php'
+        
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
             aliases.append({'country': 'us', 'title': title})
@@ -65,26 +66,31 @@ class source:
 
     def searchShow(self, title, season, episode, aliases, headers):
         try:
-            for alias in aliases:
-                url = '%s/tv-show/%s/season/%01d/episode/%01d' % (self.base_link, cleantitle.geturl(alias['title']), int(season), int(episode))
-                url = client.request(url, headers=headers,output='geturl', timeout='10')
-                if not url == None: break
+            url = '%s/tv-show/%s/season/%01d/episode/%01d' % (self.base_link, cleantitle.geturl(title), int(season), int(episode))
+            url = client.request(url, headers=headers, output='geturl', timeout='10')
+            if url == None:
+                for alias in aliases:
+                    url = '%s/tv-show/%s/season/%01d/episode/%01d' % (self.base_link, cleantitle.geturl(alias['title']), int(season), int(episode))
+                    url = client.request(url, headers=headers,output='geturl', timeout='10')
+                    if not url == None: break
             return url
         except:
             return
 
     def searchMovie(self, title, year, aliases, headers):
         try:
-            for alias in aliases:
-                url = '%s/movie/%s' % (self.base_link, cleantitle.geturl(alias['title']))
-                url = client.request(url, headers=headers, output='geturl', timeout='10')
-                if not url == None: break
+            url = '%s/movie/%s' % (self.base_link, cleantitle.geturl(title))
+            url = client.request(url, headers=headers, output='geturl', timeout='10')
             if url == None:
                 for alias in aliases:
-                    url = '%s/movie/%s-%s' % (self.base_link, cleantitle.geturl(alias['title']), year)
+                    url = '%s/movie/%s' % (self.base_link, cleantitle.geturl(alias['title']))
                     url = client.request(url, headers=headers, output='geturl', timeout='10')
                     if not url == None: break
-
+                if url == None:
+                    for alias in aliases:
+                        url = '%s/movie/%s-%s' % (self.base_link, cleantitle.geturl(alias['title']), year)
+                        url = client.request(url, headers=headers, output='geturl', timeout='10')
+                        if not url == None: break
             return url
         except:
             return
@@ -101,7 +107,6 @@ class source:
             imdb = data['imdb']
             aliases = eval(data['aliases'])
             headers = {}
-
             if 'tvshowtitle' in data:
                 url = self.searchShow(title, int(data['season']), int(data['episode']), aliases, headers)
             else:
@@ -115,7 +120,6 @@ class source:
             r = client.request(url, headers=headers, output='extended', timeout='10')
 
             if not imdb in r[0]: raise Exception()
-
 
             cookie = r[4] ; headers = r[3] ; result = r[0]
 
@@ -141,9 +145,7 @@ class source:
             headers['Cookie'] = cookie
             headers['Referer'] = url
 
-
-            u = '/ajax/ine.php'
-            u = urlparse.urljoin(self.base_link, u)
+            u = urlparse.urljoin(self.base_link, self.streampost)
 
             action = 'getEpisodeEmb' if '/episode/' in url else 'getMovieEmb'
 
@@ -188,5 +190,3 @@ class source:
             return directstream.googlepass(url)
         else:
             return url
-
-
