@@ -50,9 +50,9 @@ def get_release_quality(release_name, release_link=None):
         fmt = re.sub('(.+)(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*)(\.|\)|\]|\s)', '', release_name)
         fmt = re.split('\.|\(|\)|\[|\]|\s|-', fmt)
         fmt = [i.lower() for i in fmt]
-
         if '1080p' in fmt: quality = '1080p'
         elif '720p' in fmt: quality = '720p'
+        elif 'brrip' in fmt: quality = '720p'
         elif any(i in ['dvdscr', 'r5', 'r6'] for i in fmt): quality = 'SCR'
         elif any(i in ['camrip', 'tsrip', 'hdcam', 'hdts', 'dvdcam', 'dvdts', 'cam', 'telesync', 'ts'] for i in fmt): quality = 'CAM'
 
