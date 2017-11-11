@@ -24,30 +24,30 @@ from resources.lib.modules import client
 from resources.lib.modules import directstream
 from resources.lib.modules import jsunpack
 from resources.lib.modules import source_utils
-
+from resources.lib.modules import cfscrape
 
 class source:
     def __init__(self):
         self.priority = 1
         self.language = ['en']
-        self.domains = ['pubfilmonline.net']
-        self.base_link = 'http://pubfilmonline.net'
+        self.domains = ['pubfilmonline.net','getmypopcornnow.xyz']
+        self.base_link = 'http://getmypopcornnow.xyz'
         self.post_link = '/wp-admin/admin-ajax.php'
         self.search_link = '/?s=%s'
+        self.scraper = cfscrape.create_scraper()
 
     def movie(self, imdb, title, localtitle, aliases, year):
 
         try:
             url =  '%s/movies/%s-%s/' % (self.base_link, cleantitle.geturl(title),year)
-            url = client.request(url, output='geturl')
-            if url == None or not cleantitle.geturl(title) in url:
+            r = self.scraper.get(url).content
+            if '<h2>ERROR <span>404</span></h2>' in r:
                 url =  '%s/movies/%s/' % (self.base_link, cleantitle.geturl(title))
-                url = client.request(url, output='geturl')
-                if url == None or not cleantitle.geturl(title) in url: raise Exception
+                r = self.scraper.get(url).content
+                if '<h2>ERROR <span>404</span></h2>' in r: return
             return url
         except:
             return
-
 
     def tvshow(self, imdb, tvdb, tvshowtitle, localtvshowtitle, aliases, year):
         try:
@@ -56,7 +56,6 @@ class source:
             return url
         except:
             return
-
 
     def episode(self, url, imdb, tvdb, title, premiered, season, episode):
         try:
@@ -82,14 +81,13 @@ class source:
             if 'tvshowtitle' in data:
                 url = '%s/episodes/%s-%01dx%01d/' % (self.base_link, cleantitle.geturl(data['tvshowtitle']), int(data['season']), int(data['episode']))
                 year = re.findall('(\d{4})', data['premiered'])[0]
-                r = client.request(url)
+                r = self.scraper.get(url).content
 
                 y = client.parseDOM(r, 'span', attrs = {'class': 'date'})[0]
                 y = re.findall('(\d{4})', y)[0]
                 if not y == year: raise Exception()
             else:
-                r = client.request(url)
-
+                r = self.scraper.get(url).content
 
             result = re.findall('''['"]file['"]:['"]([^'"]+)['"],['"]label['"]:['"]([^'"]+)''', r)
 
@@ -106,6 +104,3 @@ class source:
             return directstream.googlepass(url)
         else:
             return url
-
-
-
