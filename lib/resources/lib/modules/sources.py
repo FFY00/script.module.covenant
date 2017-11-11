@@ -18,7 +18,7 @@
 '''
 
 
-import xbmc,sys,re,json,urllib,urlparse,random,datetime,time
+import sys,re,json,urllib,urlparse,random,datetime,time
 
 from resources.lib.modules import trakt
 from resources.lib.modules import tvmaze
@@ -41,7 +41,6 @@ except: pass
 try: import xbmc
 except: pass
 
-
 class sources:
     def __init__(self):
         self.getConstants()
@@ -49,7 +48,7 @@ class sources:
 
     def play(self, title, year, imdb, tvdb, season, episode, tvshowtitle, premiered, meta, select):
         try:
-              
+        
             url = None
             
             control.moderator()
@@ -344,7 +343,8 @@ class sources:
             tvshowtitle = self.getTitle(tvshowtitle)
             localtvshowtitle = self.getLocalTitle(tvshowtitle, imdb, tvdb, content)
             aliases = self.getAliasTitles(imdb, localtvshowtitle, content)
-            season, episode = thexem.get_scene_episode_number(tvdb, season, episode)
+            #Disabled on 11/11/17 due to hang. Should be checked in the future and possible enabled again.
+            #season, episode = thexem.get_scene_episode_number(tvdb, season, episode)
             for i in sourceDict: threads.append(workers.Thread(self.getEpisodeSource, title, year, imdb, tvdb, season, episode, tvshowtitle, localtvshowtitle, aliases, premiered, i[0], i[1]))
 
         s = [i[0] + (i[1],) for i in zip(sourceDict, threads)]
