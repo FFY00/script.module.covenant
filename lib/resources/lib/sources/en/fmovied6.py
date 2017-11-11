@@ -22,6 +22,7 @@ import re, urllib, urlparse
 from resources.lib.modules import cleantitle
 from resources.lib.modules import client
 from resources.lib.modules import source_utils
+from resources.lib.modules import dom_parser2
 
 
 class source:
@@ -30,7 +31,7 @@ class source:
         self.language = ['en']
         self.domains = ['freemoviedownloads6.com']
         self.base_link = 'http://freemoviedownloads6.com/'
-        self.search_link = '/search/%s/feed/rss2/'
+        self.search_link = '/?s=%s+&x=0&y=0'
 
     def movie(self, imdb, title, localtitle, aliases, year):
         try:
@@ -76,24 +77,23 @@ class source:
             query = '%s S%02dE%02d' % (
             data['tvshowtitle'], int(data['season']), int(data['episode'])) if 'tvshowtitle' in data else '%s %s' % (
             data['title'], data['year'])
-            query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', ' ', query)
+            query = re.sub('(\\\|/| -|:|;|\*|\?|"|\'|<|>|\|)', '', query)
 
             url = self.search_link % urllib.quote_plus(query)
             url = urlparse.urljoin(self.base_link, url)
 
             r = client.request(url)
 
-            posts = client.parseDOM(r, 'item')
+            posts = client.parseDOM(r, 'div', attrs={'class': 'post-\d+.+?'})
 
             items = []
 
             for post in posts:
-
                 try:
-                    t = client.parseDOM(post, 'title')[0]
-                    u = client.parseDOM(post, 'enclosure', ret='url', attrs={'type': 'video.+?'})
-
-                    items += [(t, i) for i in u]
+                    r = dom_parser2.parse_dom(post, 'a', req='href')
+                    t = r[0].content
+                    u = r[0].attrs['href']
+                    items += [(t, u)]
 
                 except:
                     pass
@@ -103,7 +103,7 @@ class source:
                     name = item[0]
                     name = client.replaceHTMLCodes(name)
 
-                    t = re.sub('(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*|3D|Free Movie Download)(\.|\)|\]|\s|)(.+|)', '', name)
+                    t = re.sub('(\.|\(|\[|\s)(\d{4}|S\d*E\d*|S\d*|3D|Free Movie Downloads)(\.|\)|\]|\s|)(.+|)', '', name)
 
                     if not cleantitle.get(t) == cleantitle.get(title): raise Exception()
 
@@ -111,15 +111,21 @@ class source:
 
                     if not y == hdlr: raise Exception()
 
-                    quality, info = source_utils.get_release_quality(item[1], None)
+                    data = client.request(item[1])
+                    data = client.parseDOM(data, 'div', attrs={'class': 'postcont'})
+                    data = client.parseDOM(data, 'p')[-1]
+                    data = dom_parser2.parse_dom(data, 'a')
+                    data = [(i.attrs['href'], i.content) for i in data]
+                    data = [(i[0], i[1]) for i in data]
+                    for i in data:
+                        quality, info = source_utils.get_release_quality(i[1], i[0])
+                        url = i[0]
+                        if any(x in url for x in ['.rar', '.zip', '.iso']): raise Exception()
+                        url = client.replaceHTMLCodes(url)
+                        url = url.encode('utf-8')
 
-                    url = item[1]
-                    if any(x in url for x in ['.rar', '.zip', '.iso']): raise Exception()
-                    url = client.replaceHTMLCodes(url)
-                    url = url.encode('utf-8')
-
-                    sources.append({'source': 'DL', 'quality': quality, 'language': 'en', 'url': url, 'info': info,
-                                    'direct': True, 'debridonly': False})
+                        sources.append({'source': 'DL', 'quality': quality, 'language': 'en', 'url': url, 'info': info,
+                                        'direct': True, 'debridonly': False})
                 except:
                     pass
 
