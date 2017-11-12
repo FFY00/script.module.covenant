@@ -30,7 +30,7 @@ class source:
         Constructor defines instances variables
 
         '''
-        self.priority = 0
+        self.priority = 1
         self.language = ['en']
         self.domains = ['putlocker.rs']
         self.base_link = 'https://putlocker.sk'
@@ -40,6 +40,14 @@ class source:
         self.film_path = '/watch/%s'
         self.info_path = '/ajax/episode/info?ts=%s&_=%s&id=%s&update=0'
         self.grabber_path = '/grabber-api/?ts=%s&id=%s&token=%s&mobile=0'
+        self.film_url = ''
+        self.headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
+                'Upgrade-Insecure-Requests':'1',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Accept-Language': 'en-US,en;q=0.8,de;q=0.6,es;q=0.4'
+        }
 
     def movie(self, imdb, title, localtitle, aliases, year):
         '''
@@ -64,16 +72,27 @@ class source:
             query = (self.movie_search_path % (clean_title))
             url = urlparse.urljoin(self.base_link, query)
 
-            search_response = client.request(url)
+            for i in range(1,3):
+                search_response = client.request(url, headers=self.headers, timeout=10)
+                if search_response != None: break
 
-            results_list = client.parseDOM(
-                search_response, 'div', attrs={'class': 'item'})[0]
-            film_id = re.findall('(\/watch\/)([^\"]*)', results_list)[0][1]
+            results_list = client.parseDOM(search_response, 'div', attrs={'class': 'item'})            
+            for result in results_list:
+                tip = client.parseDOM(result, 'div', attrs={'class':'inner'}, ret='data-tip')[0]
+                url = urlparse.urljoin(self.base_link, tip)
+                tip_response = client.request(url, headers=self.headers, timeout=10)
+                if year in tip_response:
+                    film_id = re.findall('(\/watch\/)([^\"]*)', result)[0][1]
+                    break
+
 
             query = (self.film_path % film_id)
             url = urlparse.urljoin(self.base_link, query)
+            self.film_url = url
 
-            film_response = client.request(url)
+            for i in range(1,3):
+                film_response = client.request(url, headers=self.headers, timeout=10)
+                if film_response != None: break
 
             ts = re.findall('(data-ts=\")(.*?)(\">)', film_response)[0][1]
 
@@ -153,6 +172,7 @@ class source:
 
         '''
         try:
+           
             data = urlparse.parse_qs(url)
             data = dict((i, data[i][0]) for i in data)
 
@@ -160,7 +180,9 @@ class source:
             query = (self.movie_search_path % clean_title)
             url = urlparse.urljoin(self.base_link, query)
 
-            search_response = client.request(url)
+            for i in range(1,3):
+                search_response = client.request(url, headers=self.headers, timeout=10)
+                if search_response != None: break
 
             results_list = client.parseDOM(
                 search_response, 'div', attrs={'class': 'items'})[0]
@@ -183,8 +205,12 @@ class source:
 
             query = (self.film_path % film_id)
             url = urlparse.urljoin(self.base_link, query)
+            self.film_url = url
 
-            film_response = client.request(url)
+            for i in range(1,3):
+                film_response = client.request(url, headers=self.headers, timeout=10)
+                if film_response != None: break
+
 
             ts = re.findall('(data-ts=\")(.*?)(\">)', film_response)[0][1]
 
@@ -198,9 +224,12 @@ class source:
             sources_list = []
 
             for i in sources_dom_list:
-                source_id = re.findall(
-                    ('([^\/]*)\">' + episode + '[^0-9]'), i)[0]
-                sources_list.append(source_id)
+                try:
+                    source_id = re.findall(
+                        ('([^\/]*)\">' + episode + '[^0-9]'), i)[0]
+                    sources_list.append(source_id)
+                except:
+                    pass
 
             data.update({
                 'title': title,
@@ -235,6 +264,15 @@ class source:
 
         sources = []
 
+        self.headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
+                'Upgrade-Insecure-Requests':'1',
+                'Accept': 'application/json, text/javascript, */*; q=0.01',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Referer':self.film_url,
+                'Accept-Language': 'en-US,en;q=0.8,de;q=0.6,es;q=0.4'
+        }
+
         try:
             data = urlparse.parse_qs(url)
             data = dict((i, data[i][0]) for i in data)
@@ -245,16 +283,20 @@ class source:
                     {'id': i, 'update': 0, 'ts': data['ts']}))
                 query = (self.info_path % (data['ts'], token, i))
                 url = urlparse.urljoin(self.base_link, query)
-                info_response = client.request(url, XHR=True)
+                for i in range(1,3):
+                    info_response = client.request(url, headers=self.headers, XHR=True, timeout=10)
+                    if info_response != None: break
                 grabber_dict = json.loads(info_response)
+                
 
                 try:
                     if grabber_dict['type'] == 'direct':
                         token64 = grabber_dict['params']['token']
                         query = (self.grabber_path % (data['ts'], i, token64))
                         url = urlparse.urljoin(self.base_link, query)
-
-                        response = client.request(url, XHR=True)
+                        for i in range(1,3):
+                            response = client.request(url, headers=self.headers, XHR=True, timeout=10)
+                            if response != None: break
 
                         sources_list = json.loads(response)['data']
                         
@@ -263,18 +305,41 @@ class source:
                             quality = j['label'] if not j['label'] == '' else 'SD'
                             #quality = 'HD' if quality in ['720p','1080p'] else 'SD'
                             quality = source_utils.label_to_quality(quality)
+                            urls = None
 
                             if 'googleapis' in j['file']:
-                                sources.append({'source': 'GVIDEO', 'quality': quality, 'language': 'en', 'url': j['file'], 'direct': True, 'debridonly': False})
+                                sources.append({'source': 'gvideo', 'quality': quality, 'language': 'en', 'url': j['file'], 'direct': True, 'debridonly': False})
                                 continue
+
+                            if 'lh3.googleusercontent' in j['file'] or 'bp.blogspot' in j['file']:
+                                try:
+                                    newheaders = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
+                                           'Accept': '*/*',
+                                           'Host': 'lh3.googleusercontent.com',
+                                           'Accept-Language': 'en-US,en;q=0.8,de;q=0.6,es;q=0.4',
+                                           'Accept-Encoding': 'identity;q=1, *;q=0',
+                                           'Referer': self.film_url,
+                                           'Connection': 'Keep-Alive',
+                                           'X-Client-Data': 'CJK2yQEIo7bJAQjEtskBCPqcygEIqZ3KAQjSncoBCKijygE=',
+                                           'Range': 'bytes=0-'
+                                      }
+                                    resp = client.request(j['file'], headers=newheaders, redirect=False, output='extended', timeout='10')
+                                    loc = resp[2]['Location']
+                                    c = resp[2]['Set-Cookie'].split(';')[0]
+                                    j['file'] = '%s|Cookie=%s' % (loc, c)
+                                    urls, host, direct = [{'quality': quality, 'url': j['file']}], 'gvideo', True    
+                                            
+                                except: 
+                                    pass
 
                             #source = directstream.googlepass(j['file'])
                             valid, hoster = source_utils.is_host_valid(j['file'], hostDict)
-                            urls, host, direct = source_utils.check_directstreams(j['file'], hoster)
+                            if not urls or urls == []:
+                                urls, host, direct = source_utils.check_directstreams(j['file'], hoster)
                             for x in urls:
                                 sources.append({
                                     'source': 'gvideo',
-                                    'quality': quality,
+                                    'quality': x['quality'],
                                     'language': 'en',
                                     'url': x['url'],
                                     'direct': True,
