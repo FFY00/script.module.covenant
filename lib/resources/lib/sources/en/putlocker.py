@@ -139,7 +139,7 @@ class source:
             headers['Accept-Encoding'] = 'gzip,deflate,br'
             headers['Referer'] = url
 
-            u = '/ajax/tnembedr.php'
+            u = '/ajax/vsozrflxcw.php'
             self.base_link = client.request(self.base_link, headers=headers, output='geturl')
             u = urlparse.urljoin(self.base_link, u)
 
@@ -217,4 +217,3 @@ class source:
             return directstream.googlepass(url)
         else:
             return url
-
