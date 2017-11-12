@@ -21,7 +21,7 @@
 
 import urlparse
 
-from resources.lib.modules import source_utils, dom_parser, client
+from resources.lib.modules import source_utils, dom_parser, client, control
 
 class source:
     def __init__(self):
@@ -82,27 +82,28 @@ class source:
             
             valid, host = source_utils.is_host_valid(result, hostDict)
             q = source_utils.check_sd_url(result)
-            first_found = {'source': host, 'quality': q, 'language': 'pl', 'url': result, 'info': '', 'direct': False, 'debridonly': False}        
-           
-            search_url = urlparse.urljoin(self.base_link, self.search_more)
-            result = client.request(search_url, post=search_more_post)
-            result = dom_parser.parse_dom(result, 'a')            
-            for el in result :
-                desc = el.content
-                info = desc[desc.find("(") + 1:desc.find(")")]
-                lang = 'pl'
-                if info.lower() == 'eng':
-                    lang='en'
-                    info=None
-                link = el.attrs['href']                                 
-                
-                valid, host = source_utils.is_host_valid(link, hostDict)
-                if not valid: continue
-                q = source_utils.check_sd_url(link)
-                
-                sources.append({'source': host, 'quality': q, 'language': lang, 'url': link, 'info': info, 'direct': False, 'debridonly': False})
+            first_found = {'source': host, 'quality': q, 'language': 'pl', 'url': result, 'info': '', 'direct': False, 'debridonly': False}      
             
-            first_found['info'] = self.get_info_from_others(sources)
+            if control.setting('provider.filmwebbooster.extrasearch') == 'true':
+                search_url = urlparse.urljoin(self.base_link, self.search_more)
+                result = client.request(search_url, post=search_more_post)
+                result = dom_parser.parse_dom(result, 'a')            
+                for el in result :
+                    desc = el.content
+                    info = desc[desc.find("(") + 1:desc.find(")")]
+                    lang = 'pl'
+                    if info.lower() == 'eng':
+                        lang='en'
+                        info=None
+                    link = el.attrs['href']                                 
+                    
+                    valid, host = source_utils.is_host_valid(link, hostDict)
+                    if not valid: continue
+                    q = source_utils.check_sd_url(link)
+                    
+                    sources.append({'source': host, 'quality': q, 'language': lang, 'url': link, 'info': info, 'direct': False, 'debridonly': False})
+                
+                first_found['info'] = self.get_info_from_others(sources)
             sources.append(first_found)
             
             return sources
