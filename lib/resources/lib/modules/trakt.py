@@ -36,6 +36,11 @@ V2_API_KEY = control.setting('trakt.client_id')
 CLIENT_SECRET = control.setting('trakt.client_secret')
 REDIRECT_URI = 'urn:ietf:wg:oauth:2.0:oob'
 
+if V2_API_KEY == "":
+    V2_API_KEY = "acc97918ace2b0a211957d574e7cd7c7bc7a59b9c949df625077f1d5fb107082"
+if CLIENT_SECRET == ""
+    CLIENT_SECRET = "0f3e0b9096477ee0d373d1d354700449bf0fa648bef33c191db5845b346f16ef"
+
 def __getTrakt(url, post=None):
     try:
         url = urlparse.urljoin(BASE_URL, url)
